@@ -8,6 +8,9 @@ Todo funciona en tu PC, sin depender de servicios de pago para las imágenes.
 > Hecho para aprender Python desde cero y publicar el proyecto en GitHub.
 > Interfaz visual en Streamlit + base de datos SQLite + IA de texto DeepSeek.
 
+> ⚡ **[EMPIEZA_AQUI.md](EMPIEZA_AQUI.md)**: tus enlaces, comandos y el flujo de trabajo
+> en una sola página.
+
 ---
 
 ## ✨ Características
