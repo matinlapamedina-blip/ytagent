@@ -1,0 +1,20 @@
+# Normaliza los finales de línea para que el proyecto funcione igual
+# en Windows, macOS y Linux (muy importante al trabajar en equipo).
+* text=auto eol=lf
+
+# Scripts de Windows conservan su formato CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Archivos binarios: Git no debe intentar "arreglarlos"
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.zip binary
+*.7z binary
+*.safetensors binary
+*.onnx binary
+*.db binary

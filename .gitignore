@@ -1,0 +1,36 @@
+# ---- Secretos (NUNCA se sube esto a GitHub) ----
+.env
+.env.local
+*.key
+*.pem
+
+# ---- Entorno virtual de Python ----
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# ---- Temporales / cachés ----
+.tmp/
+tmp-tests-comfyui/
+.tmp2/
+.pipcache/
+.pytest_cache/
+.ruff_cache/
+*.log
+
+# ---- Datos generados por el usuario ----
+# El contenido que produce el agente NO se sube al repo
+data/
+output/
+
+# ---- Sistema operativo / editor ----
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/*
+!.vscode/extensions.json
+.idea/
