@@ -188,7 +188,7 @@ def sidebar() -> int | None:
                     placeholder="camioneros misteriosos de noche en Texas",
                     height=70,
                 )
-                crear = st.form_submit_button("Crear video", use_container_width=True)
+                crear = st.form_submit_button("Crear video", width="stretch")
             if crear:
                 if not titulo.strip():
                     st.warning("Ponle un título.")
@@ -227,7 +227,7 @@ def sidebar() -> int | None:
                 else 0,
             )
             st.caption(f"Tokens usados en esta sesión: **{st.session_state['tokens']:,}**")
-            if st.button("🧹 Limpiar log", use_container_width=True):
+            if st.button("🧹 Limpiar log", width="stretch"):
                 st.session_state["log"] = []
 
         st.divider()
@@ -262,7 +262,7 @@ def tab_ideas(video_id: int) -> None:
     with col3:
         st.write("")
         st.write("")
-        generar = st.button("✨ Generar ideas", type="primary", use_container_width=True)
+        generar = st.button("✨ Generar ideas", type="primary", width="stretch")
 
     if generar:
         llm = _llm()
@@ -302,7 +302,7 @@ def tab_ideas(video_id: int) -> None:
                     "Usar esta idea",
                     key=f"usar_{fila['id']}",
                     disabled=fila["elegida"] == 1,
-                    use_container_width=True,
+                    width="stretch",
                 ):
                     store.marcar_idea(video_id, fila["id"])
                     st.rerun()
@@ -367,7 +367,7 @@ def tab_guion(video_id: int) -> None:
         n_escenas = st.number_input("Escenas", 6, 40, 20, key="n_escenas")
     with c3:
         st.write("")
-        escribir = st.button("✍️ Escribir guion", type="primary", use_container_width=True)
+        escribir = st.button("✍️ Escribir guion", type="primary", width="stretch")
 
     if escribir:
         llm = _llm()
@@ -421,9 +421,9 @@ def tab_prompts(video_id: int) -> None:
 
     c1, c2, c3 = st.columns([1, 1, 2])
     with c1:
-        regenerar = st.button("🔁 Regenerar prompts", use_container_width=True)
+        regenerar = st.button("🔁 Regenerar prompts", width="stretch")
     with c2:
-        exportar = st.button("💾 Exportar (txt/csv/json)", use_container_width=True)
+        exportar = st.button("💾 Exportar (txt/csv/json)", width="stretch")
     with c3:
         st.caption(f"{len(guion.escenas)} escenas · estilo: {st.session_state['estilo'][:45]}...")
 
@@ -463,7 +463,7 @@ def tab_prompts(video_id: int) -> None:
         if comfy is None:
             st.caption("módulo no instalado todavía")
         else:
-            if st.button("🔌 Probar conexión", use_container_width=True):
+            if st.button("🔌 Probar conexión", width="stretch"):
                 info = comfy.diagnostico()
                 if info.get("disponible"):
                     st.success(f"Conectado. Checkpoints: {info.get('checkpoints') or 'ninguno'}")
@@ -479,7 +479,7 @@ def tab_prompts(video_id: int) -> None:
             f"🚀 Iniciar cola ({pendientes})",
             type="primary",
             disabled=pendientes == 0,
-            use_container_width=True,
+            width="stretch",
         ):
             _ejecutar_cola(video_id, comfy)
 
@@ -519,7 +519,7 @@ def tab_prompts(video_id: int) -> None:
         for i, p in enumerate(prompts):
             with columnas[i % 4]:
                 if p["imagen"] and Path(p["imagen"]).exists():
-                    st.image(p["imagen"], use_container_width=True)
+                    st.image(p["imagen"], width="stretch")
                 else:
                     st.markdown(
                         f"""<div style="border:1px dashed #24405f; border-radius:10px;
@@ -547,7 +547,7 @@ def tab_prompts(video_id: int) -> None:
         data=texto_prompts.encode("utf-8"),
         file_name=f"prompts_{video.get('slug', video_id)}.txt",
         mime="text/plain",
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -652,7 +652,7 @@ def tab_publicar(video_id: int) -> None:
 
     st.divider()
     st.markdown("### 📦 Exportar todo")
-    if st.button("💾 Exportar paquete completo", use_container_width=True):
+    if st.button("💾 Exportar paquete completo", width="stretch"):
         try:
             resultado = exporters.exportar_paquete(video_id)
             for error in resultado.get("errores", []):
@@ -675,7 +675,7 @@ def tab_publicar(video_id: int) -> None:
                     data=data,
                     file_name=archivo.name,
                     key=f"dl_{archivo.name}",
-                    use_container_width=True,
+                    width="stretch",
                 )
             except OSError:
                 st.caption(f"⚠️ no se pudo leer {archivo.name}")

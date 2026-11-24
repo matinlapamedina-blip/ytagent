@@ -102,6 +102,20 @@ $env:PYTHONPATH="src"; .\.venv\Scripts\python.exe -m streamlit run src\ytagent\d
 
 Se abre en tu navegador en `http://localhost:8501`. Para cerrar: `Ctrl + C` en PowerShell.
 
+### Arrancar ComfyUI (para generar imágenes)
+
+En este equipo ComfyUI ya está instalado en `D:\ComfyUI\ComfyUI_windows_portable\`.
+Ábrelo en **otra** ventana de PowerShell y déjala abierta:
+
+```powershell
+& "D:\ComfyUI\ComfyUI_windows_portable\run_nvidia_gpu.bat"
+```
+
+Tarda 1-2 minutos en arrancar la primera vez. Cuando responda en
+`http://127.0.0.1:8188`, en la pestaña **🖼️ Prompts** de la app pulsa
+**🔌 Probar conexión** y luego **🚀 Iniciar cola**. Velocidad medida en esta máquina
+(RTX 4060 8 GB + SDXL + LoRA de 4 pasos): **~8 segundos por imagen**.
+
 📘 **Guía completa, paso a paso y con todos los detalles:**
 [`docs/PASO_A_PASO.md`](docs/PASO_A_PASO.md)
 
@@ -118,6 +132,10 @@ Toda la configuración vive en el archivo `.env` de la raíz. Estas son las vari
 | `LLM_TEMPERATURE` | `1.1` | creatividad del texto (0 = predecible, 2 = muy creativo) |
 | `COMFYUI_URL` | `http://127.0.0.1:8188` | dónde escucha ComfyUI |
 | `COMFYUI_CHECKPOINT` | *(vacío)* | nombre exacto del `.safetensors`; vacío = usa el primero instalado |
+| `COMFYUI_LORA` | *(vacío)* | LoRA opcional (aquí: `sdxl_lightning_4step_lora.safetensors`, el acelerador) |
+| `IMAGE_STEPS` | `20` | pasos de muestreo (con el LoRA Lightning: `4`) |
+| `IMAGE_CFG` | `6.5` | escala de guiado (con Lightning: `1.5`) |
+| `IMAGE_SAMPLER` | `dpmpp_2m` | algoritmo de muestreo (con Lightning: `euler`) |
 | `VISUAL_STYLE` | `cinematic photorealistic, ...` | estilo que se añade a **todos** los prompts |
 | `IMAGE_ASPECT` | `16:9` | relación de aspecto (→ 1024×576) |
 | `LANGUAGE` | `es` | reservado para el idioma de los textos |

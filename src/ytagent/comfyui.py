@@ -318,6 +318,30 @@ def listar_checkpoints() -> list[str]:
     return [str(opcion) for opcion in opciones if str(opcion).strip()]
 
 
+def listar_loras() -> list[str]:
+    """Devuelve los LoRA (.safetensors) que ComfyUI tiene instalados.
+
+    Pregunta al nodo ``LoraLoader`` cuáles son sus opciones válidas.
+    Si ComfyUI no responde o no tiene ese nodo, lanza :class:`ComfyUIError`.
+    """
+    respuesta = _peticion("GET", "/object_info/LoraLoader", timeout=TIMEOUT_CORTO)
+    if not respuesta.ok:
+        raise _error_http(respuesta, "No se pudo leer la lista de LoRAs de ComfyUI")
+
+    datos = _json_de(respuesta, "GET /object_info/LoraLoader")
+    try:
+        opciones = datos["LoraLoader"]["input"]["required"]["lora_name"][0]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise ComfyUIError(
+            "ComfyUI respondió, pero no encontré la lista de LoRAs. "
+            "¿El nodo LoraLoader no está disponible en esta versión?"
+        ) from exc
+
+    if not isinstance(opciones, list):
+        raise ComfyUIError("La lista de LoRAs que devolvió ComfyUI tiene un formato inesperado.")
+    return [str(opcion) for opcion in opciones if str(opcion).strip()]
+
+
 def _resolver_checkpoint(checkpoint: str | None) -> str:
     """Elige el checkpoint: parámetro -> configuración -> primero instalado -> error."""
     elegido = (checkpoint or "").strip() or settings.comfyui_checkpoint.strip()
@@ -892,6 +916,7 @@ def procesar_lote(
     on_item: Callable[[int, Path | str], None] | None = None,
     on_progress: Callable[[str], None] | None = None,
     cancelar: Callable[[], bool] | None = None,
+    **ajustes: Any,
 ) -> list[dict[str, Any]]:
     """Genera una imagen por elemento, una detrás de otra, sin abortar por fallos.
 
@@ -905,6 +930,8 @@ def procesar_lote(
             recibe el mensaje de error como texto.
         on_progress: callback de texto para la UI.
         cancelar: función que devuelve ``True`` para parar el lote limpiamente.
+        **ajustes: se pasan tal cual a :func:`generar_imagen` (``checkpoint``,
+            ``steps``, ``cfg``, ``sampler``, ``scheduler``, ``lora``...).
 
     Returns:
         Lista de resultados::
@@ -964,6 +991,7 @@ def procesar_lote(
                 height=datos["height"],
                 destino=destino,
                 on_progress=avisar,
+                **ajustes,
             )
         except Exception as exc:  # una imagen rota no debe tumbar todo el lote
             error = f"{type(exc).__name__}: {exc}"
@@ -1008,6 +1036,8 @@ def diagnostico() -> dict[str, Any]:
         "url": settings.comfyui_url,
         "checkpoints": [],
         "checkpoint_actual": settings.comfyui_checkpoint,
+        "loras": [],
+        "lora_actual": settings.comfyui_lora,
         "error": "",
     }
     try:
@@ -1043,6 +1073,19 @@ def diagnostico() -> dict[str, Any]:
             estado["error"] = (
                 "ComfyUI responde, pero no hay checkpoints instalados. "
                 "Copia un modelo en ComfyUI/models/checkpoints."
+            )
+
+        # LoRAs: el fallo aquí no invalida el diagnóstico (es opcional)
+        try:
+            estado["loras"] = listar_loras()
+        except ComfyUIError:
+            estado["loras"] = []
+        lora_configurado = settings.comfyui_lora.strip()
+        if lora_configurado and estado["loras"] and lora_configurado not in estado["loras"]:
+            estado["lora_actual"] = ""
+            estado["error"] = (
+                f"El LoRA configurado '{lora_configurado}' no está instalado en ComfyUI. "
+                f"Disponibles: {', '.join(estado['loras']) or 'ninguno'}."
             )
         return estado
     except Exception as exc:  # el diagnóstico jamás debe tumbar la interfaz

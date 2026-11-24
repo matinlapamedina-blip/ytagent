@@ -60,9 +60,12 @@ VISUAL_STYLE=cinematic photorealistic, teal and orange color grading, ...
 IMAGE_ASPECT=16:9
 ```
 
-- **De dónde salió la clave:** entraste a `platform.deepseek.com`, creaste una
-  *API key* en la sección **API keys** y la pegaste en `.env`. Es una contraseña:
-  no se comparte, no se pega en chats y **nunca** se sube a GitHub.
+- **De dónde salió la clave:** este proyecto se montó en un equipo que ya tenía
+  DeepSeek Harness instalado, y la clave se tomó de su configuración
+  (`C:\Users\LENGION\.dsh\.credentials.yaml`) para poder probarlo de verdad. En un
+  equipo nuevo: entra a `platform.deepseek.com`, crea una *API key* en la sección
+  **API keys** y pégala en `.env`. Es una contraseña: no se comparte, no se pega en
+  chats y **nunca** se sube a GitHub.
 - **Cómo cambiarla:** abre el archivo con el Bloc de notas y edita esa línea:
 
   ```powershell
@@ -318,21 +321,39 @@ Debajo aparecen botones **⬇️** para descargar cada archivo.
 
 ---
 
-## 🖨️ 8. Instala ComfyUI en Windows (para las imágenes)
+## 🖨️ 8. ComfyUI: instalar desde cero (y lo que ya está instalado aquí)
 
 ComfyUI es el programa que convierte cada prompt en una imagen. Es local y gratuito;
 con tu RTX 4060 de 8 GB funciona bien con modelos SDXL.
+
+> ✅ **En ESTE equipo ya quedó instalado y verificado** (1.99 GB de programa + 6.46 GB
+> de modelo + 376 MB de acelerador, en el disco `D:`):
+> - Programa: `D:\ComfyUI\ComfyUI_windows_portable\` (versión 0.46.0, portable NVIDIA)
+> - Arranque: `D:\ComfyUI\ComfyUI_windows_portable\run_nvidia_gpu.bat`
+> - Modelo: `ComfyUI\models\checkpoints\sd_xl_base_1.0.safetensors`
+> - Acelerador: `ComfyUI\models\loras\sdxl_lightning_4step_lora.safetensors`
+> - Velocidad medida: **~27 segundos por imagen** a 1024×576.
+> Si algún día lo reinstalas en otro PC, sigue los pasos de abajo.
 
 ### 8.1 Elige cómo instalarlo
 
 - **ComfyUI Desktop** (más fácil): descarga el instalador para Windows desde
   [comfy.org](https://www.comfy.org/) y ejecútalo. Elige una carpeta para los
   modelos (por ejemplo `C:\Users\LENGION\Documents\ComfyUI\models`).
-- **ComfyUI Portable** (sin instalador): descarga el ZIP portátil para NVIDIA
-  (suele llamarse `ComfyUI_windows_portable_nvidia...7z`, el nombre incluye la
-  versión de CUDA) desde la sección *Releases* del repositorio de ComfyUI,
-  descomprímelo (7-Zip) y ejecuta `run_nvidia_gpu.bat`. Todo queda dentro de la
-  carpeta portable.
+- **ComfyUI Portable** (lo que se usó aquí): descarga el 7z portátil para NVIDIA
+  (`ComfyUI_windows_portable_nvidia.7z`) desde la sección *Releases* del repositorio
+  de ComfyUI, descomprímelo y ejecuta `run_nvidia_gpu.bat`.
+  Windows 11 descomprime `.7z` sin programas extra; también sirve 7-Zip.
+  Si usas PowerShell, esto funciona tal cual:
+
+  ```powershell
+  # Descargar (ajusta la version a la ultima que veas en github.com/comfyanonymous/ComfyUI/releases)
+  $url = "https://github.com/Comfy-Org/ComfyUI/releases/download/v0.46.0/ComfyUI_windows_portable_nvidia.7z"
+  New-Item -ItemType Directory -Force -Path "D:\_descargas","D:\ComfyUI" | Out-Null
+  curl.exe -L -o "D:\_descargas\ComfyUI.7z" $url
+  # Descomprimir con el tar de Windows (lee .7z)
+  tar -xf "D:\_descargas\ComfyUI.7z" -C "D:\ComfyUI"
+  ```
 
 En los dos casos, al abrir ComfyUI se levanta un servidor local en
 `http://127.0.0.1:8188` y se abre su interfaz en el navegador. Deja esa ventana
@@ -346,37 +367,57 @@ Los modelos `.safetensors` van en la carpeta **`models\checkpoints`**:
 - **Desktop:** la carpeta de modelos que elegiste al instalar, seguida de
   `checkpoints\` (por ejemplo `C:\Users\LENGION\Documents\ComfyUI\models\checkpoints\`)
 
-Copia el archivo `.safetensors` (por ejemplo `juggernautXL_v9.safetensors`) ahí y
-reinicia ComfyUI. Para comprobar que lo ve, en la interfaz de ComfyUI usa el nodo
-*Load Checkpoint*: tu modelo debe aparecer en la lista. También puedes pulsar
-**🔌 Probar conexión** en ytagent y ver los checkpoints.
+Copia el archivo `.safetensors` ahí y reinicia ComfyUI. Para comprobar que lo ve,
+pulsa **🔌 Probar conexión** en ytagent: la app lista los modelos que ComfyUI ve.
 
 Después, en el `.env`, pon el **nombre exacto** del archivo:
 
 ```text
-COMFYUI_CHECKPOINT=juggernautXL_v9.safetensors
+COMFYUI_CHECKPOINT=sd_xl_base_1.0.safetensors
 ```
 
 Si lo dejas vacío, ytagent usa el **primer** checkpoint instalado.
 
-### 8.3 El puerto 8188
+### 8.3 El acelerador LoRA (opcional pero recomendado)
+
+El archivo `sdxl_lightning_4step_lora.safetensors` (376 MB) hace que una imagen
+tarde **4 pasos en vez de 20**: pasa de ~2 minutos a ~27 segundos con casi la misma
+calidad. Va en `ComfyUI\models\loras\` y se activa en el `.env`:
+
+```text
+COMFYUI_LORA=sdxl_lightning_4step_lora.safetensors
+IMAGE_STEPS=4
+IMAGE_CFG=1.5
+IMAGE_SAMPLER=euler
+IMAGE_SCHEDULER=sgm_uniform
+```
+
+Si borras el LoRA o dejas esas líneas vacías, ytagent vuelve solo a los valores
+normales (20 pasos, cfg 6.5, dpmpp_2m/karras). Descarga del LoRA:
+
+```powershell
+$url = "https://huggingface.co/ByteDance/SDXL-Lightning/resolve/main/sdxl_lightning_4step_lora.safetensors"
+curl.exe -L -o "D:\ComfyUI\ComfyUI_windows_portable\ComfyUI\models\loras\sdxl_lightning_4step_lora.safetensors" $url
+```
+
+### 8.4 El puerto 8188
 
 ComfyUI escucha en el puerto **8188** por defecto. ytagent apunta ahí
 (`COMFYUI_URL=http://127.0.0.1:8188`). No hace falta abrir el puerto en el router:
 todo es local. Si usas firewall de terceros y te bloquea, permite la aplicación en
 redes privadas. Si cambiaste el puerto de ComfyUI, actualiza `COMFYUI_URL`.
 
-### 8.4 Modelos recomendados para 8 GB de VRAM
+### 8.5 Modelos recomendados para 8 GB de VRAM
 
 | Modelo | Tamaño aprox. | Nota |
 |---|---|---|
-| **SDXL Base 1.0** (`sd_xl_base_1.0.safetensors`) | ~6.9 GB | el estándar; funciona a 1024×576 con 20 pasos |
+| **SDXL Base 1.0** (`sd_xl_base_1.0.safetensors`) | ~6.46 GB | el instalado aquí; a 1024×576 va bien |
 | **Juggernaut XL** (v9/v10) | ~7 GB | fotografía realista; muy popular para YouTube |
 | **RealVisXL** (V4/V5) | ~7 GB | retratos y escenas realistas, buen detalle |
 
 Consejos para 8 GB: genera de **una imagen a la vez** (ytagent ya lo hace),
-mantén 1024×576 (16:9), `steps` 20 y `cfg` 6.5 (son los valores por defecto del
-código), y cierra juegos u otros programas que usen la GPU.
+mantén 1024×576 (16:9), usa el LoRA de 4 pasos, y cierra juegos u otros programas
+que usen la GPU.
 
 > **Flux:** es otro modelo más grande (12B parámetros). En 8 GB solo entra con
 > **cuantización** (GGUF/FP8) y va justo y lento; además necesita nodos distintos
@@ -384,14 +425,14 @@ código), y cierra juegos u otros programas que usen la GPU.
 > normal (`CheckpointLoaderSimple`). Es decir: **Flux no funciona con este proyecto
 > tal cual**. Para Flux usa la exportación a `prompts.txt`/`prompts.json`.
 
-### 8.5 Si la app dice "ComfyUI no disponible"
+### 8.6 Si la app dice "ComfyUI no disponible"
 
 Ese es el mensaje de `comfyui.diagnostico()`:
 *"No se pudo conectar con ComfyUI en http://127.0.0.1:8188. Abre ComfyUI (o revisa
 COMFYUI_URL en el archivo .env)."* Revisa, en este orden:
 
 1. ¿ComfyUI está **abierto y terminó de cargar**? Debe responder en el navegador:
-   `http://127.0.0.1:8188`.
+   `http://127.0.0.1:8188`. La primera vez tarda 1-2 minutos en levantar.
 2. ¿La URL de `COMFYUI_URL` coincide? (Si cambiaste el puerto, cámbiala.)
 3. ¿Otro programa ocupa el 8188?
    `netstat -ano | Select-String "8188"`
@@ -400,6 +441,12 @@ COMFYUI_URL en el archivo .env)."* Revisa, en este orden:
 
 Si conecta pero no hay modelos, el aviso será *"No hay checkpoints instalados..."*:
 copia un `.safetensors` en `models\checkpoints` y reinicia ComfyUI.
+
+Comando rápido para abrir ComfyUI desde PowerShell:
+
+```powershell
+& "D:\ComfyUI\ComfyUI_windows_portable\run_nvidia_gpu.bat"
+```
 
 ---
 
@@ -418,12 +465,11 @@ VISUAL_STYLE=cinematic photorealistic, teal and orange color grading, dramatic r
   y reinicia la app. Después **regenera los prompts** (pestaña 🖼️ Prompts).
 - **En la app:** en **⚙️ Ajustes** (barra lateral) hay estilos predefinidos
   (🎥 Cinematográfico, 🌑 Misterio, 🌅 Documental, 🌆 Neón, ☀️ Cálido) y una opción
-  *✏️ Personalizado*. Ese selector se usa al generar el guion y las escenas. Para
-  que el cambio quede también en los prompts guardados, cambia el `.env` y regenera.
+  *✏️ Personalizado*. Ese estilo se usa al escribir las escenas **y** al generar los
+  prompts masivos y las imágenes.
 - **Relación de aspecto:** `IMAGE_ASPECT` (por defecto `16:9` = 1024×576). El
-  selector de **⚙️ Ajustes** avisa si no coincide con la configuración, pero el
-  tamaño que se guarda al generar los prompts sale del `.env`; para cambiarlo,
-  edita `IMAGE_ASPECT` y regenera.
+  selector de **⚙️ Ajustes** cambia el tamaño de los prompts que generes a partir de
+  ese momento (el `.env` es el valor inicial).
 
 ### Las referencias de estilo
 
